@@ -35,14 +35,23 @@ def infer_context_p():
     prompt = request.form.get('prompt')
     generator = get_generator()
 
-    generator.settings.token_repetition_penalty_max = 1.176
-    generator.settings.token_repetition_penalty_sustain = config.max_seq_len
-    generator.settings.temperature = 0.7
-    generator.settings.top_p = 0.1
-    generator.settings.top_k = 40
-    generator.settings.typical = 0.0    # Disabled
+    # Get parameters from request if provided, else use defaults
+    token_repetition_penalty_max = float(request.form.get('token_repetition_penalty_max', 1.176))
+    token_repetition_penalty_sustain = int(request.form.get('token_repetition_penalty_sustain', config.max_seq_len))
+    temperature = float(request.form.get('temperature', 0.7))
+    top_p = float(request.form.get('top_p', 0.1))
+    top_k = int(request.form.get('top_k', 40))
+    typical = float(request.form.get('typical', 0.0))
+    max_new_tokens = int(request.form.get('max_new_tokens', 200))
 
-    outputs = generator.generate_simple(prompt, max_new_tokens=200)
+    generator.settings.token_repetition_penalty_max = token_repetition_penalty_max
+    generator.settings.token_repetition_penalty_sustain = token_repetition_penalty_sustain
+    generator.settings.temperature = temperature
+    generator.settings.top_p = top_p
+    generator.settings.top_k = top_k
+    generator.settings.typical = typical    # Disabled if 0.0
+
+    outputs = generator.generate_simple(prompt, max_new_tokens=max_new_tokens)
     return outputs
 
 
