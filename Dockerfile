@@ -1,6 +1,6 @@
 FROM nvidia/cuda:11.8.0-cudnn8-devel-ubuntu22.04 as build
-ARG RUN_UID="1000" \
-    APPLICATION_STATE_PATH="/data"
+ARG RUN_UID="1000"
+ARG APPLICATION_STATE_PATH="/data"
 ENV RUN_UID=$RUN_UID \
     APPLICATION_STATE_PATH=$APPLICATION_STATE_PATH \
     CONTAINER_MODEL_PATH=$APPLICATION_STATE_PATH/model \
@@ -28,9 +28,9 @@ RUN pip install --upgrade pip setuptools wheel \
     && pip install -r requirements.txt \
     && pip install -r requirements-web.txt
 
+USER root
+STOPSIGNAL SIGINT
+
 COPY --chown=$RUN_UID . /app
 
-USER root
-
-STOPSIGNAL SIGINT
 ENTRYPOINT ["/bin/bash", "-c", "/app/entrypoint.sh $0 $@"]
