@@ -9,7 +9,7 @@ from flask import Flask, render_template, request
 from flask import Response, stream_with_context
 from waitress import serve
 
-import model_init
+from .. import model_init
 from ..model import ExLlama
 from session import get_generator, get_initial_session, load_session, new_session, prepare_sessions, Session, \
     _sessions_dir
