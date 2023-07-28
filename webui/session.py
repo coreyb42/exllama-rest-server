@@ -46,6 +46,11 @@ def prepare_sessions(_model, _tokenizer, _s_dir):
         os.makedirs(sessions_folder)
 
 
+def get_generator():
+    global generator
+    return generator
+
+
 def get_initial_session():
     last_session_file = _sessions_dir("_last_session")
     if not os.path.exists(last_session_file):

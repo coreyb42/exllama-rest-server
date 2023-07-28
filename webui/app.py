@@ -8,7 +8,8 @@ from threading import Timer, Lock
 import webbrowser
 import json
 import model_init
-from session import prepare_sessions, get_initial_session, Session, load_session, new_session, _sessions_dir
+from session import get_generator, get_initial_session, load_session, new_session, prepare_sessions, Session, \
+    _sessions_dir
 import argparse
 from tokenizer import ExLlamaTokenizer
 from waitress import serve
@@ -17,6 +18,23 @@ app = Flask(__name__)
 app.static_folder = 'static'
 generate_lock = Lock()
 session: Session
+
+
+@app.route('/infer_precise', methods=['POST'])
+def infer_context_p():
+    print(request.form)
+    prompt = request.form.get('prompt')
+    generator = get_generator()
+
+    generator.settings.token_repetition_penalty_max = 1.176
+    generator.settings.token_repetition_penalty_sustain = config.max_seq_len
+    generator.settings.temperature = 0.7
+    generator.settings.top_p = 0.1
+    generator.settings.top_k = 40
+    generator.settings.typical = 0.0    # Disabled
+
+    outputs = generator.generate_simple(prompt, max_new_tokens=200)
+    return outputs
 
 
 # Render template
