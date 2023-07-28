@@ -1,8 +1,7 @@
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from model import ExLlama, ExLlamaConfig
-from flask import Flask, render_template, request, jsonify
+from model import ExLlama
+from flask import Flask, render_template, request
 from flask import Response, stream_with_context
 from threading import Timer, Lock
 import webbrowser
@@ -14,6 +13,7 @@ import argparse
 from tokenizer import ExLlamaTokenizer
 from waitress import serve
 
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 app = Flask(__name__)
 app.static_folder = 'static'
 generate_lock = Lock()
@@ -113,7 +113,7 @@ def api_set_session():
     if load_session_name == ".":
         session = new_session()
     else:
-        session = load_session(load_session_name, append_path = True)
+        session = load_session(load_session_name, append_path=True)
     return json.dumps({"result": "ok"}) + "\n"
 
 
@@ -133,7 +133,7 @@ def api_userinput():
     user_input = data["user_input"]
 
     with generate_lock:
-        result = Response(stream_with_context(session.respond_multi(user_input)), mimetype = 'application/json')
+        result = Response(stream_with_context(session.respond_multi(user_input)), mimetype='application/json')
         return result
 
 
@@ -147,8 +147,10 @@ def api_append_block():
 # Load the model
 
 parser = argparse.ArgumentParser(description="Simple web-based chatbot for ExLlama")
-parser.add_argument("-host", "--host", type = str, help = "IP:PORT eg, 0.0.0.0:7862", default = "localhost:5000")
-parser.add_argument("-sd", "--sessions_dir", type = str, help = "Location for storing user sessions, default: ~/exllama_sessions/", default = "~/exllama_sessions/")
+parser.add_argument("-host", "--host", type=str, help="IP:PORT eg, 0.0.0.0:7862", default="localhost:5000")
+parser.add_argument("-sd", "--sessions_dir", type=str,
+                    help="Location for storing user sessions, default: ~/exllama_sessions/",
+                    default="~/exllama_sessions/")
 
 model_init.add_args(parser)
 args = parser.parse_args()
