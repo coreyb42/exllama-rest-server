@@ -18,14 +18,17 @@ RUN if [ ${RUN_UID} -ne 0 ] ; then useradd -m -u $RUN_UID user ; fi \
     && chown -R $RUN_UID $APPLICATION_STATE_PATH
 USER $RUN_UID
 
-COPY --chown=$RUN_UID . /app
+
+COPY --chown=$RUN_UID requirements.txt /app/
+COPY --chown=$RUN_UID requirements-web.txt /app/
 
 WORKDIR /app
 
-# Create application state directory and install python packages
 RUN pip install --upgrade pip setuptools wheel \
     && pip install -r requirements.txt \
     && pip install -r requirements-web.txt
+
+COPY --chown=$RUN_UID . /app
 
 USER root
 
