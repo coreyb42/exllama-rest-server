@@ -7,13 +7,13 @@ import webbrowser
 
 from flask import Flask, render_template, request
 from flask import Response, stream_with_context
-from tokenizer import ExLlamaTokenizer
 from waitress import serve
 
 import model_init
 from ..model import ExLlama
 from session import get_generator, get_initial_session, load_session, new_session, prepare_sessions, Session, \
     _sessions_dir
+from ..tokenizer import ExLlamaTokenizer
 
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
