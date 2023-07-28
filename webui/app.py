@@ -1,17 +1,20 @@
-import sys
+import argparse
+import json
 import os
-from model import ExLlama
-from flask import Flask, render_template, request
-from flask import Response, stream_with_context
+import sys
 from threading import Timer, Lock
 import webbrowser
-import json
-import model_init
-from session import get_generator, get_initial_session, load_session, new_session, prepare_sessions, Session, \
-    _sessions_dir
-import argparse
+
+from flask import Flask, render_template, request
+from flask import Response, stream_with_context
 from tokenizer import ExLlamaTokenizer
 from waitress import serve
+
+import model_init
+from ..model import ExLlama
+from session import get_generator, get_initial_session, load_session, new_session, prepare_sessions, Session, \
+    _sessions_dir
+
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 app = Flask(__name__)
