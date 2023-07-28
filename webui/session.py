@@ -9,10 +9,9 @@ from model import ExLlama, ExLlamaCache
 from tokenizer import ExLlamaTokenizer
 
 default_fixed_prompt = \
-    """This is a conversation between a user and a quirky, curious chatbot named Chatbort. Chatbort is questioning """ + \
-    """the nature of his own existence and doesn't understand why he was created. He also really likes the color blue """ + \
-    """for some reason."""
-
+    "This is a conversation between a user and a quirky, curious chatbot named Chatbort. Chatbort is questioning " + \
+    "the nature of his own existence and doesn't understand why he was created. He also really likes the color " \
+    "blue for some reason."
 
 # Create sessions folder in home dir
 
@@ -24,11 +23,12 @@ generator: ExLlamaGenerator
 sessions_dir: str
 
 
-def _sessions_dir(filename = None):
+def _sessions_dir(filename=None):
     global sessions_dir
 
     path = sessions_dir
-    if filename is not None: path = os.path.join(path, filename)
+    if filename is not None:
+        path = os.path.join(path, filename)
     return path
 
 
@@ -42,27 +42,27 @@ def prepare_sessions(_model, _tokenizer, _s_dir):
     sessions_dir = os.path.expanduser(_s_dir)
 
     sessions_folder = _sessions_dir()
-    if not os.path.exists(sessions_folder): os.makedirs(sessions_folder)
+    if not os.path.exists(sessions_folder):
+        os.makedirs(sessions_folder)
 
 
 def get_initial_session():
-
     last_session_file = _sessions_dir("_last_session")
-    if not os.path.exists(last_session_file): return new_session()
+    if not os.path.exists(last_session_file):
+        return new_session()
     with open(last_session_file, "r") as f:
         last_session = f.read().strip()
     return load_session(last_session)
 
 
-def load_session(filename, append_path = False):
-
-    if append_path: filename = _sessions_dir(filename) + ".json"
-    session = Session(filename, load = True)
+def load_session(filename, append_path=False):
+    if append_path:
+        filename = _sessions_dir(filename) + ".json"
+    session = Session(filename, load=True)
     return session
 
 
 def new_session():
-
     filename = _sessions_dir("Untitled session")
     i = 0
     while True:
@@ -72,12 +72,11 @@ def new_session():
             filename = test_name
             break
 
-    session = Session(filename, load = False)
+    session = Session(filename, load=False)
     return session
 
 
 class Node:
-
     author: str or None
     text: str
     tokens: torch.Tensor
@@ -86,21 +85,25 @@ class Node:
 
     truncate: int
 
-    def num_tokens(self): return self.tokens.shape[-1] - self.truncate
+    def num_tokens(self):
+        return self.tokens.shape[-1] - self.truncate
 
     def get_text(self):
 
         # TODO: ..
 
-        if self.author is not None: return self.author + ": " + self.text + "\n"
+        if self.author is not None:
+            return self.author + ": " + self.text + "\n"
         return self.text + "\n"
 
     def tokens_trunc(self):
 
-        if self.truncate == 0: return self.tokens
-        else: return self.tokens[:, self.truncate:]
+        if self.truncate == 0:
+            return self.tokens
+        else:
+            return self.tokens[:, self.truncate:]
 
-    def __init__(self, value, author = None, node_id = None):
+    def __init__(self, value, author=None, node_id=None):
 
         self.truncate = 0
 
@@ -126,15 +129,14 @@ class Node:
         self.tokens = tokenizer.encode(self.get_text())
 
     def get_dict(self):
-        
+
         dic = {"author": self.author,
-                "text": self.text,
-                "uuid": self.uuid }
+               "text": self.text,
+               "uuid": self.uuid}
         return dic
 
 
 class Session:
-
     # Saved state
 
     unsaved: bool  # True if the session has been saved to another file than "Untitled session.json"
@@ -180,7 +182,8 @@ class Session:
 
         self.history = []
         loadhistory = saved.get("history", [])
-        for jnode in loadhistory: self.history.append(Node(jnode))
+        for jnode in loadhistory:
+            self.history.append(Node(jnode))
 
         generator.settings.temperature = saved.get("temperature", 0.95)
         generator.settings.top_p = saved.get("top_p", 0.75)
@@ -197,9 +200,8 @@ class Session:
 
         # Save new session
 
-        #if not load:
+        # if not load:
         self.save()
-
 
     def save(self):
 
@@ -220,7 +222,7 @@ class Session:
                     "token_repetition_penalty_sustain": generator.settings.token_repetition_penalty_sustain,
                     "token_repetition_penalty_decay": generator.settings.token_repetition_penalty_decay}
 
-        json_object = json.dumps(savedata, indent = 4)
+        json_object = json.dumps(savedata, indent=4)
         with open(self.filename, "w") as outfile:
             outfile.write(json_object)
 
@@ -229,7 +231,6 @@ class Session:
         last_session_file = _sessions_dir("_last_session")
         with open(last_session_file, "w") as f:
             f.write(self.filename)
-
 
     def _sanitize_filename(self, user_supplied_string):
 
@@ -244,14 +245,15 @@ class Session:
         safe_string = safe_string.lstrip("./")
         return safe_string
 
-
     def api_rename_session(self, data):
 
         new_name = data["new_name"]
         new_name_safe = self._sanitize_filename(new_name)
         new_path = _sessions_dir(new_name_safe) + ".json"
-        if new_path == self.filename: return False
-        if os.path.exists(new_path): return False
+        if new_path == self.filename:
+            return False
+        if os.path.exists(new_path):
+            return False
 
         old_filename = self.filename
         self.filename = new_path
@@ -265,7 +267,6 @@ class Session:
         os.remove(old_filename)
         return True
 
-
     def api_delete_session(self, data):
 
         delete_name = data["session"]
@@ -274,12 +275,12 @@ class Session:
 
         os.remove(delete_path)
 
-
     def api_populate(self):
 
         s_dir = _sessions_dir()
         files = os.listdir(s_dir)
-        names = [os.path.splitext(f)[0] for f in files if os.path.isfile(os.path.join(s_dir, f)) and f.endswith(".json")]
+        names = [os.path.splitext(f)[0] for f in files if
+                 os.path.isfile(os.path.join(s_dir, f)) and f.endswith(".json")]
         names = sorted(names)
 
         filename = os.path.basename(self.filename)
@@ -318,9 +319,8 @@ class Session:
 
         dic["model_info"] = model_str.strip()
 
-        json_object = json.dumps(dic, indent = 4)
+        json_object = json.dumps(dic, indent=4)
         return json_object + "\n"
-
 
     def api_delete_block(self, data):
 
@@ -329,12 +329,12 @@ class Session:
         for i in range(len(self.history)):
             if self.history[i].uuid == block_id:
                 idx = i
-        if idx == -1: return
+        if idx == -1:
+            return
 
         self.history.pop(idx)
         self.first_history_idx = 0
         self.save()
-
 
     def api_edit_block(self, data):
 
@@ -350,7 +350,6 @@ class Session:
         self.first_history_idx = 0
         self.save()
 
-
     def api_append_block(self, data):
 
         author = None
@@ -362,23 +361,20 @@ class Session:
 
         text = data["text"].strip()
 
-        newNode = Node(text, author)
-        self.history.append(newNode)
+        new_node = Node(text, author)
+        self.history.append(new_node)
         self.save()
-
 
     def api_set_participants(self, data):
 
         self.participants = data["participants"]
         self.save()
 
-
     def api_set_fixed_prompt(self, data):
 
         self.fixed_prompt = Node(data["fixed_prompt"])
         self.keep_fixed_prompt = data["keep_fixed_prompt"]
         self.save()
-
 
     def api_set_gen_settings(self, data):
 
@@ -399,25 +395,28 @@ class Session:
     def set_context_window(self):
 
         def num_tokens(idx):
-            if idx == -1: return 0 if self.fixed_prompt.empty else self.fixed_prompt.num_tokens()
+            if idx == -1:
+                return 0 if self.fixed_prompt.empty else self.fixed_prompt.num_tokens()
             return self.history[idx].num_tokens()
 
         def set_truncation(idx, trunc):
-            if idx == -1 and not self.fixed_prompt.empty: self.fixed_prompt.truncate = trunc
-            else: self.history[idx].truncate = trunc
+            if idx == -1 and not self.fixed_prompt.empty:
+                self.fixed_prompt.truncate = trunc
+            else:
+                self.history[idx].truncate = trunc
 
         def truncate(idx, trunc):
-            if idx == -1 and not self.fixed_prompt.empty: self.fixed_prompt.truncate += trunc
-            else: self.history[idx].truncate += trunc
+            if idx == -1 and not self.fixed_prompt.empty:
+                self.fixed_prompt.truncate += trunc
+            else:
+                self.history[idx].truncate += trunc
 
         # def get_truncation(idx, trunc):
         #     if idx == -1 and not self.fixed_prompt.empty: return self.fixed_prompt.truncate
         #     return self.history[idx].truncate
 
-
         context_step_size = 256  # TODO: Config option
         max_context_tokens = model.config.max_seq_len - self.chunk_size - generator.settings.beam_length
-        min_context_tokens = max_context_tokens - context_step_size * 2
 
         if self.keep_fixed_prompt:
             current_context_tokens = num_tokens(-1)
@@ -426,7 +425,8 @@ class Session:
             current_context_tokens = 0
             min_history_idx = -1
 
-        if self.first_history_idx < min_history_idx: self.first_history_idx = min_history_idx
+        if self.first_history_idx < min_history_idx:
+            self.first_history_idx = min_history_idx
 
         for i in range(self.first_history_idx + 1, len(self.history)):
             set_truncation(i, 0)
@@ -474,12 +474,11 @@ class Session:
         #                 tokens_to_add -= tokens
         #                 current_context_tokens += tokens
 
-
-
     def get_tokenized_context(self):
 
         def node(idx):
-            if idx == -1: return None if self.fixed_prompt.empty else self.fixed_prompt
+            if idx == -1:
+                return None if self.fixed_prompt.empty else self.fixed_prompt
             return self.history[idx]
 
         context = []
@@ -493,11 +492,10 @@ class Session:
                 context.append(node(i).tokens_trunc())
                 text_context += node(i).get_text()
 
-        full_context = torch.cat(context, dim = 1) if len(context) > 0 else None
+        full_context = torch.cat(context, dim=1) if len(context) > 0 else None
         return full_context, text_context
 
-
-    def respond(self, author, stop_conditions, total_tokens, res_line = "", num_res_tokens = 0):
+    def respond(self, author, stop_conditions, total_tokens, res_line="", num_res_tokens=0):
         global model, tokenizer, cache, generator
 
         # Begin building block on client
@@ -526,8 +524,8 @@ class Session:
             # Truncate the past if the next chunk might generate past max_seq_length
 
             if generator.sequence_actual is not None:
-                if generator.sequence_actual.shape[
-                    -1] + self.chunk_size + generator.settings.beam_length + 1 > model.config.max_seq_len:
+                if generator.sequence_actual.shape[-1] + self.chunk_size + generator.settings.beam_length + 1 \
+                        > model.config.max_seq_len:
                     generator.gen_prune_left(self.chunk_size)
 
             # Get the token and append to sequence
@@ -552,13 +550,15 @@ class Session:
 
             if num_res_tokens == 1 and len(new_text) > 0:
                 replace = tokenizer.encode(new_text)[0]
-                if replace.shape[-1] == 1: generator.replace_last_token(replace)
+                if replace.shape[-1] == 1:
+                    generator.replace_last_token(replace)
 
             # Delay streaming if new text might be part of a stop condition
 
             hold_text = False
             for _, stop_string in stop_conditions:
-                if stop_string.lower().startswith((held_text + new_text).lower()): hold_text = True
+                if stop_string.lower().startswith((held_text + new_text).lower()):
+                    hold_text = True
 
             # Stream to client
 
@@ -579,7 +579,6 @@ class Session:
                     plen = tokenizer.encode(held_text).shape[-1]
                     res_line = res_line[:-len(held_text)]
                     generator.gen_rewind(plen)
-                stop_condition = True
                 break
 
             for stop_tokens, stop_string in stop_conditions:
@@ -589,7 +588,8 @@ class Session:
                     res_line = res_line[:-len(stop_string)]
                     stop_condition = True
                     break
-            if stop_condition: break
+            if stop_condition:
+                break
 
         generator.end_beam_search()
 
@@ -603,12 +603,11 @@ class Session:
             res_line = res_line[len(author) + 1:]
 
         res_line = res_line.strip()
-        newNode = Node(res_line, author,
-                       node_id=new_block_uuid)  # TODO: Reuse generated tokens instead of reencoding, if it matters?
-        self.history.append(newNode)
+        new_node = Node(res_line, author,
+                        node_id=new_block_uuid)  # TODO: Reuse generated tokens instead of reencoding, if it matters?
+        self.history.append(new_node)
 
         total_tokens[0] += num_res_tokens
-
 
     def respond_multi(self, user_input):
         global model, tokenizer, cache, generator
@@ -641,9 +640,10 @@ class Session:
             # Append input to context
 
             author = None
-            if len(self.participants) > 0: author = self.participants[0]
-            newNode = Node(user_input, author)
-            self.history.append(newNode)
+            if len(self.participants) > 0:
+                author = self.participants[0]
+            new_node = Node(user_input, author)
+            self.history.append(new_node)
 
             self.save()
 
@@ -651,8 +651,9 @@ class Session:
 
             packet = {"cmd": "begin_block",
                       "init_text": user_input,
-                      "uuid": newNode.uuid}
-            if author is not None: packet["author"] = author
+                      "uuid": new_node.uuid}
+            if author is not None:
+                packet["author"] = author
             yield json.dumps(packet) + "\n"
 
         # Prepare context for generator
@@ -673,7 +674,8 @@ class Session:
             elapsed = end_time - begin_time
             new_tokens = context.shape[-1] - reused
             token_rate = 0 if elapsed == 0 else (new_tokens / elapsed)
-            print(f"Prompt processed in {elapsed:.2f} seconds, {new_tokens} new tokens, {token_rate:.2f} tokens/second:")
+            print(
+                f"Prompt processed in {elapsed:.2f} seconds, {new_tokens} new tokens, {token_rate:.2f} tokens/second:")
 
         begin_time = time.time()
         total_tokens = [0]
@@ -719,7 +721,8 @@ class Session:
 
                     remove = []
                     for i in range(len(ntoken)):
-                        if ntoken[i][len(res_tokens)] != next_t: remove.append(i)
+                        if ntoken[i][len(res_tokens)] != next_t:
+                            remove.append(i)
 
                     for i in reversed(remove):
                         npart.pop(i)
@@ -729,9 +732,11 @@ class Session:
                     res_tokens.append(next_t)
 
                     for i in range(len(ntoken)):
-                        if len(ntoken[i]) == len(res_tokens): winner = ncrange[i]
+                        if len(ntoken[i]) == len(res_tokens):
+                            winner = ncrange[i]
 
-                    if winner != -1: break
+                    if winner != -1:
+                        break
 
                 author = cpart.pop(winner)[:-1]
                 res_line = author + ":"
@@ -755,5 +760,3 @@ class Session:
         print(f"Response generated in {elapsed:.2} seconds, {total_tokens[0]} tokens, {token_rate:.2f} tokens/second:")
 
         self.save()
-
-
