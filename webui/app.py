@@ -20,7 +20,13 @@ generate_lock = Lock()
 session: Session
 
 
-@app.route('/infer_precise', methods=['POST'])
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+# Render template
+@app.route('/api/infer_precise', methods=['POST'])
 def infer_context_p():
     print(request.form)
     prompt = request.form.get('prompt')
@@ -35,12 +41,6 @@ def infer_context_p():
 
     outputs = generator.generate_simple(prompt, max_new_tokens=200)
     return outputs
-
-
-# Render template
-@app.route("/")
-def home():
-    return render_template("index.html")
 
 
 # Get existing sessions
