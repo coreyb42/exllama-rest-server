@@ -12,7 +12,7 @@ if [ $RUN_UID -ne 0 ]; then
   chown -R $RUN_UID:$RUN_UID $APPLICATION_STATE_PATH
 fi
 
-export PYTHONPATH=$PYTHONPATH:/app
+export PYTHONPATH=/app
 # Run service as specified (non-root) user
 exec runuser -u $(id -un $RUN_UID) -- python3 /app/webui/app.py \
 	-d $CONTAINER_MODEL_PATH \
