@@ -1,11 +1,12 @@
-from model import ExLlama, ExLlamaCache, ExLlamaConfig
-from tokenizer import ExLlamaTokenizer
-from generator import ExLlamaGenerator
+import json
+import os
 import time
 import torch
-import os
-import json
 import uuid
+
+from generator import ExLlamaGenerator
+from model import ExLlama, ExLlamaCache
+from tokenizer import ExLlamaTokenizer
 
 default_fixed_prompt = \
     """This is a conversation between a user and a quirky, curious chatbot named Chatbort. Chatbort is questioning """ + \
@@ -21,6 +22,7 @@ cache: ExLlamaCache
 generator: ExLlamaGenerator
 
 sessions_dir: str
+
 
 def _sessions_dir(filename = None):
     global sessions_dir
@@ -98,7 +100,6 @@ class Node:
         if self.truncate == 0: return self.tokens
         else: return self.tokens[:, self.truncate:]
 
-
     def __init__(self, value, author = None, node_id = None):
 
         self.truncate = 0
@@ -119,12 +120,10 @@ class Node:
             self.empty = len(self.text) == 0
             self.uuid = value.get("uuid", node_id or str(uuid.uuid4()))
 
-
     def replace_text(self, new_text):
 
         self.text = new_text
         self.tokens = tokenizer.encode(self.get_text())
-
 
     def get_dict(self):
         
@@ -160,11 +159,15 @@ class Session:
 
         # Running state
 
-        if cache is None: cache = ExLlamaCache(model)
-        else: cache.current_seq_len = 0
+        if cache is None:
+            cache = ExLlamaCache(model)
+        else:
+            cache.current_seq_len = 0
 
-        if generator is None: generator = ExLlamaGenerator(model, tokenizer, cache)
-        else: generator.reset()
+        if generator is None:
+            generator = ExLlamaGenerator(model, tokenizer, cache)
+        else:
+            generator.reset()
 
         self.first_history_idx = 0
 

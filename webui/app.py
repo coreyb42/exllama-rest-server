@@ -18,21 +18,21 @@ app.static_folder = 'static'
 generate_lock = Lock()
 session: Session
 
-# Render template
 
+# Render template
 @app.route("/")
 def home():
     return render_template("index.html")
 
-# Get existing sessions
 
+# Get existing sessions
 @app.route("/api/populate")
 def api_populate():
     global session
     return session.api_populate()
 
-# Edit block
 
+# Edit block
 @app.route("/api/edit_block", methods=['POST'])
 def api_edit_block():
     global session
@@ -40,8 +40,8 @@ def api_edit_block():
     session.api_edit_block(data)
     return json.dumps({"result": "ok"}) + "\n"
 
-# Delete block
 
+# Delete block
 @app.route("/api/delete_block", methods=['POST'])
 def api_delete_block():
     global session
@@ -49,8 +49,8 @@ def api_delete_block():
     session.api_delete_block(data)
     return json.dumps({"result": "ok"}) + "\n"
 
-# Rename session
 
+# Rename session
 @app.route("/api/rename_session", methods=['POST'])
 def api_rename_session():
     global session
@@ -58,8 +58,8 @@ def api_rename_session():
     success = session.api_rename_session(data)
     return json.dumps({"result": "ok" if success else "fail"}) + "\n"
 
-# Delete session
 
+# Delete session
 @app.route("/api/delete_session", methods=['POST'])
 def api_delete_session():
     global session
@@ -67,8 +67,8 @@ def api_delete_session():
     session.api_delete_session(data)
     return json.dumps({"result": "ok"}) + "\n"
 
-# Set fixed prompt settings
 
+# Set fixed prompt settings
 @app.route("/api/set_fixed_prompt", methods=['POST'])
 def api_set_fixed_prompt():
     global session
@@ -76,8 +76,8 @@ def api_set_fixed_prompt():
     session.api_set_fixed_prompt(data)
     return json.dumps({"result": "ok"}) + "\n"
 
-# Set generation settings
 
+# Set generation settings
 @app.route("/api/set_gen_settings", methods=['POST'])
 def api_set_gen_settings():
     global session
@@ -85,8 +85,8 @@ def api_set_gen_settings():
     session.api_set_gen_settings(data)
     return json.dumps({"result": "ok"}) + "\n"
 
-# Set session
 
+# Set session
 @app.route("/api/set_session", methods=['POST'])
 def api_set_session():
     global session
@@ -98,8 +98,8 @@ def api_set_session():
         session = load_session(load_session_name, append_path = True)
     return json.dumps({"result": "ok"}) + "\n"
 
-# Set participants
 
+# Set participants
 @app.route("/api/set_participants", methods=['POST'])
 def api_set_participants():
     global session
@@ -107,8 +107,8 @@ def api_set_participants():
     session.api_set_participants(data)
     return json.dumps({"result": "ok"}) + "\n"
 
-# Accept input
 
+# Accept input
 @app.route("/api/userinput", methods=['POST'])
 def api_userinput():
     data = request.get_json()
@@ -118,11 +118,13 @@ def api_userinput():
         result = Response(stream_with_context(session.respond_multi(user_input)), mimetype = 'application/json')
         return result
 
+
 @app.route("/api/append_block", methods=['POST'])
 def api_append_block():
     data = request.get_json()
     session.api_append_block(data)
     return json.dumps({"result": "ok"}) + "\n"
+
 
 # Load the model
 
@@ -161,4 +163,4 @@ host, port = machine.split(":")
 if host == "localhost":
     Timer(1, lambda: webbrowser.open(f'http://{machine}/')).start()
 
-serve(app, host = host, port = port)
+serve(app, host=host, port=port)
