@@ -42,7 +42,7 @@ def infer_context_p():
     top_p = float(request.form.get('top_p', 0.1))
     top_k = int(request.form.get('top_k', 40))
     typical = float(request.form.get('typical', 0.0))
-    max_new_tokens = int(request.form.get('max_new_tokens', 200))
+    max_new_tokens = int(request.form.get('max_new_tokens', 3000))
 
     generator.settings.token_repetition_penalty_max = token_repetition_penalty_max
     generator.settings.token_repetition_penalty_sustain = token_repetition_penalty_sustain

@@ -4,6 +4,7 @@ from lora import ExLlamaLora
 import torch
 import torch.nn.functional as F
 
+
 class ExLlamaGenerator:
 
     class Settings:
@@ -21,7 +22,6 @@ class ExLlamaGenerator:
         beams = 1
         beam_length = 1
 
-
     model: ExLlama
     sequence: torch.Tensor or None
     sequence_actual: torch.Tensor or None
@@ -32,14 +32,12 @@ class ExLlamaGenerator:
     disallowed_tokens: list[int] or None
     lora: ExLlamaLora or None
 
-
     def __init__(self, model, tokenizer, cache):
 
         self.model = model
         self.tokenizer = tokenizer
         self.cache = cache
         self.reset()
-
 
     def reset(self):
 
@@ -54,11 +52,9 @@ class ExLlamaGenerator:
         self.disallowed_tokens = None
         self.lora = None
 
-
     def make_rep_mask(self, penalty_max, sustain, decay):
 
         return cuda_ext.ext_rep_penalty_mask_cpu(self.model.config.vocab_size, self.sequence, penalty_max, sustain, decay)
-
 
     def batched_sample(self, logits, temperature, top_k, top_p, min_p, typical, num = 1):
 
@@ -73,9 +69,7 @@ class ExLlamaGenerator:
 
         return torch.cat(samples, dim = 0), torch.cat(scores, dim = 0)
 
-
     # Sample one token from logits with current settings
-
     def sample_current(self, logits, num = 1):
 
         return self.sample(logits,
@@ -85,9 +79,7 @@ class ExLlamaGenerator:
                            self.settings.min_p,
                            self.settings.typical)
 
-
-    # Sample one token from logits
-
+    # Sample one token from logit
     def sample(self, logits, temperature, top_k, top_p, min_p, typical, num = 1):
 
         # torch.manual_seed(42)
@@ -169,11 +161,9 @@ class ExLlamaGenerator:
 
         return sampled_tokens.unsqueeze(0), sampled_probs.unsqueeze(0)
 
-
     def disallow_tokens(self, tokens):
 
         self.disallowed_tokens = tokens
-
 
     def gen_begin(self, in_tokens, mask = None):
 
@@ -185,14 +175,12 @@ class ExLlamaGenerator:
 
         self.model.forward(self.sequence[:, :-1], self.cache, preprocess_only = True, lora = self.lora, input_mask = mask)
 
-
     def gen_begin_empty(self):
 
         self.end_beam_search()
         self.sequence = None
         self.sequence_actual = None
         self.cache.current_seq_len = 0
-
 
     def gen_begin_reuse(self, in_tokens, mask = None):
 
@@ -221,7 +209,6 @@ class ExLlamaGenerator:
         if reuse < in_tokens.shape[-1]: self.gen_feed_tokens(in_tokens[:, reuse:], mask = mask)
         return reuse
 
-
     def gen_feed_tokens(self, in_tokens, mask = None):
 
         if self.sequence is None:
@@ -242,14 +229,12 @@ class ExLlamaGenerator:
 
         self.sequence_actual = self.sequence
 
-
     def gen_accept_token(self, token):
 
         self.end_beam_search()
         if self.sequence is None: self.sequence = token
         else: self.sequence = torch.cat((self.sequence, token), dim = 1)
         self.sequence_actual = self.sequence
-
 
     def gen_rewind(self, num_tokens):
 
@@ -259,14 +244,12 @@ class ExLlamaGenerator:
         self.cache.current_seq_len -= num_tokens
         self.sequence_actual = self.sequence
 
-
     def gen_prune_right(self, tokens, mask = None):
 
         self.end_beam_search()
         if tokens > self.sequence.shape[-1] - 1: return
         self.gen_begin(self.sequence[:, tokens:], mask = mask)
         self.sequence_actual = self.sequence
-
 
     def gen_prune_to(self, min_tokens_to_keep, token_id, mask = None):
 
@@ -287,7 +270,6 @@ class ExLlamaGenerator:
 
         self.gen_begin(self.sequence, mask = mask)
 
-
     def gen_prune_left(self, num_tokens, mask = None):
 
         num_tokens = min(num_tokens, self.sequence_actual.shape[-1] - 1)
@@ -300,15 +282,13 @@ class ExLlamaGenerator:
             self.sequence = self.sequence[:, num_tokens:]
             self.gen_begin(self.sequence, mask = mask)
 
-
     def gen_num_tokens(self):
 
         return self.sequence_actual.shape[-1]
 
-
     # Simple generator function
 
-    def generate_simple(self, prompt, max_new_tokens = 128):
+    def generate_simple(self, prompt, max_new_tokens=3000):
 
         self.end_beam_search()
 
@@ -327,7 +307,6 @@ class ExLlamaGenerator:
         text = self.tokenizer.decode(self.sequence[0] if self.sequence.shape[0] == 1 else self.sequence)
         return text
 
-
     # Apply repetition penalty with current  settings
 
     def apply_rep_penalty(self, logits):
@@ -337,7 +316,6 @@ class ExLlamaGenerator:
                                                 self.settings.token_repetition_penalty_sustain,
                                                 self.settings.token_repetition_penalty_decay,
                                                 logits)
-
 
     # Generate a single token with the current settings, append to sequence
 
@@ -379,7 +357,6 @@ class ExLlamaGenerator:
 
         self.gen_accept_token(token)
         return token
-
 
     # Beam search
 
@@ -493,7 +470,6 @@ class ExLlamaGenerator:
                                              len(self) - 1, 1,
                                              0, 1, 0, 1)
 
-
     def begin_beam_search(self):
 
         self.beams = None
@@ -501,7 +477,6 @@ class ExLlamaGenerator:
 
         self.in_beam_search = True
         # self.testl = []
-
 
     def beam_search(self):
 
@@ -690,7 +665,6 @@ class ExLlamaGenerator:
 
         return best_token
 
-
     def end_beam_search(self):
 
         if not self.in_beam_search: return
@@ -699,12 +673,10 @@ class ExLlamaGenerator:
         self.cache.current_seq_len = self.sequence.shape[-1] - 1
         self.in_beam_search = False
 
-
     def replace_last_token(self, token, seq = False):
 
         self.sequence_actual[:, -1] = token
         if seq: self.sequence[:, -1] = token
-
 
     def sequence_ends_with(self, tokens):
 
